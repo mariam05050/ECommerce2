@@ -1,0 +1,32 @@
+<Solution>
+  <Folder Name="/docs/" />
+  <Folder Name="/src/">
+    <Project Path="ECommerce.Database/ECommerce.Database.csproj" />
+  </Folder>
+  <Folder Name="/src/Authentication/">
+    <Project Path="Auth.API/Auth.API.csproj" />
+    <Project Path="Auth.Data/Auth.Data.csproj" />
+    <Project Path="Auth.Services/Auth.Services.csproj" />
+  </Folder>
+  <Folder Name="/src/Cart/">
+    <Project Path="Cart.API/Cart.API.csproj" />
+    <Project Path="Cart.Data/Cart.Data.csproj" />
+    <Project Path="Cart.Services/Cart.Services.csproj" />
+  </Folder>
+  <Folder Name="/src/Order/">
+    <Project Path="Order.API/Order.API.csproj" />
+    <Project Path="Order.Data/Order.Data.csproj" />
+    <Project Path="Order.Services/Order.Services.csproj" />
+  </Folder>
+  <Folder Name="/src/Product/">
+    <Project Path="Product.API/Product.API.csproj" />
+    <Project Path="Product.Data/Product.Data.csproj" />
+    <Project Path="Product.Services/Product.Services.csproj" />
+  </Folder>
+  <Folder Name="/src/Tracking/">
+    <Project Path="Tracking.API/Tracking.API.csproj" />
+    <Project Path="Tracking.Data/Tracking.Data.csproj" />
+    <Project Path="Tracking.Services/Tracking.Services.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+</Solution>
