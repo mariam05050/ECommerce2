@@ -67,11 +67,31 @@ public class TrackingService : ITrackingService
                 orderId,
                 cancellationToken);
 
+        // A new order must start in Processing.
+        if (latestEvent is null &&
+            status != TrackingStatus.Processing)
+        {
+            throw new InvalidOperationException(
+                "A new order must start with Processing status.");
+        }
+
+        // Do not allow the same status twice in a row.
         if (latestEvent is not null &&
             latestEvent.Status == status)
         {
             throw new InvalidOperationException(
                 "The order already has this status.");
+        }
+
+        // Validate the status transition.
+        if (latestEvent is not null &&
+            !IsValidTransition(
+                latestEvent.Status,
+                status))
+        {
+            throw new InvalidOperationException(
+                $"Cannot change order status from " +
+                $"{latestEvent.Status} to {status}.");
         }
 
         var trackingEvent = new TrackingEvent
@@ -93,6 +113,34 @@ public class TrackingService : ITrackingService
             OrderId = trackingEvent.OrderId,
             Status = trackingEvent.Status,
             CreatedAtUtc = trackingEvent.CreatedAtUtc
+        };
+    }
+
+    private static bool IsValidTransition(
+        TrackingStatus currentStatus,
+        TrackingStatus newStatus)
+    {
+        return currentStatus switch
+        {
+            TrackingStatus.Processing =>
+                newStatus == TrackingStatus.Shipped,
+
+            TrackingStatus.Shipped =>
+                newStatus == TrackingStatus.Delayed ||
+                newStatus == TrackingStatus.OutForDelivery,
+
+            TrackingStatus.Delayed =>
+                newStatus == TrackingStatus.Shipped ||
+                newStatus == TrackingStatus.OutForDelivery,
+
+            TrackingStatus.OutForDelivery =>
+                newStatus == TrackingStatus.Delayed ||
+                newStatus == TrackingStatus.Delivered,
+
+            TrackingStatus.Delivered =>
+                false,
+
+            _ => false
         };
     }
 }
