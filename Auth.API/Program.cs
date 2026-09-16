@@ -22,21 +22,14 @@ using Tracking.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// =====================================================
-// Database
-// =====================================================
-
+// Register the shared database context.
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
-
-// =====================================================
-// DbContext Interfaces
-// =====================================================
-
+// Expose the context through each module's interface.
 builder.Services.AddScoped<IAuthDbContext>(sp =>
     sp.GetRequiredService<AppDbContext>());
 
@@ -52,83 +45,46 @@ builder.Services.AddScoped<IOrderDbContext>(sp =>
 builder.Services.AddScoped<ITrackingDbContext>(sp =>
     sp.GetRequiredService<AppDbContext>());
 
-
-// =====================================================
-// AutoMapper
-// =====================================================
-
+// Register AutoMapper profiles.
 builder.Services.AddAutoMapper(
     cfg => { },
     typeof(Auth.Services.MappingProfile),
     typeof(Product.Services.MappingProfile));
 
-
-// =====================================================
-// Options
-// =====================================================
-
+// Bind JWT configuration from appsettings.json.
 builder.Services
     .AddOptions<JwtSettings>()
     .Bind(builder.Configuration.GetSection("Jwt"))
     .ValidateOnStart();
 
-
-// =====================================================
-// Auth Services
-// =====================================================
-
+// Register authentication services.
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 
-
-// =====================================================
-// Product Services
-// =====================================================
-
+// Register product services.
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
-
-// =====================================================
-// Cart Services
-// =====================================================
-
+// Register cart services.
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<ICartRepository, CartRepository>();
 
-
-// =====================================================
-// Order Services
-// =====================================================
-
+// Register order services.
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
-
-// =====================================================
-// Tracking Services
-// =====================================================
-
+// Register tracking services.
 builder.Services.AddScoped<ITrackingService, TrackingService>();
 builder.Services.AddScoped<ITrackingRepository, TrackingRepository>();
 
-
-// =====================================================
-// Global Exception Handling
-// =====================================================
-
+// Convert exceptions into API responses.
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-
 builder.Services.AddProblemDetails();
 
-
-// =====================================================
-// FluentValidation
-// =====================================================
-
+// Register validators.
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterValidator>();
 
 builder.Services.AddValidatorsFromAssemblyContaining<
@@ -137,11 +93,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<
 builder.Services.AddValidatorsFromAssemblyContaining<
     Cart.Services.AddToCartValidator>();
 
-
-// =====================================================
-// Authentication / JWT
-// =====================================================
-
+// Configure JWT authentication.
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -168,11 +120,7 @@ builder.Services
             };
     });
 
-
-// =====================================================
-// Controllers / JSON
-// =====================================================
-
+// Register controllers and serialize enums as strings.
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -180,14 +128,9 @@ builder.Services.AddControllers()
             new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
 
-
-// =====================================================
-// OpenAPI / Scalar
-// =====================================================
-
+// Configure OpenAPI and JWT security.
 builder.Services.AddOpenApi(options =>
 {
-    // Register JWT Bearer as an OpenAPI security scheme.
     options.AddDocumentTransformer(
         (document, context, cancellationToken) =>
         {
@@ -208,7 +151,6 @@ builder.Services.AddOpenApi(options =>
             return Task.CompletedTask;
         });
 
-    // Mark endpoints using [Authorize] as requiring JWT.
     options.AddOperationTransformer(
         (operation, context, cancellationToken) =>
         {
@@ -237,19 +179,9 @@ builder.Services.AddOpenApi(options =>
         });
 });
 
-
-// =====================================================
-// Build Application
-// =====================================================
-
 var app = builder.Build();
 
-
-// =====================================================
-// Middleware
-// =====================================================
-
-// Global exception handler must run before endpoints.
+// Handle exceptions before reaching the endpoints.
 app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
@@ -258,10 +190,6 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
-
-// =====================================================
-// Endpoints
-// =====================================================
 app.MapOpenApi();
 
 app.MapScalarApiReference();
@@ -269,3 +197,7 @@ app.MapScalarApiReference();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program
+{
+}

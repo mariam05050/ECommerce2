@@ -1,17 +1,23 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>3b5ae65a-1a42-401a-acc7-a81dd6a9b0dd</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Auth.Services\Auth.Services.csproj" />
+    <ProjectReference Include="..\Cart.Data\Cart.Data.csproj" />
     <ProjectReference Include="..\Cart.Services\Cart.Services.csproj" />
+    <ProjectReference Include="..\ECommerce.Database\ECommerce.Database.csproj" />
   </ItemGroup>
 
 </Project>

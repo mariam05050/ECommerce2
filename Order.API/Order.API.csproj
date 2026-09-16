@@ -1,17 +1,24 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>fa57b1f6-c87c-42d3-a9f3-f2da974d03bf</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Auth.Services\Auth.Services.csproj" />
+    <ProjectReference Include="..\ECommerce.Database\ECommerce.Database.csproj" />
+    <ProjectReference Include="..\Order.Data\Order.Data.csproj" />
     <ProjectReference Include="..\Order.Services\Order.Services.csproj" />
+    <ProjectReference Include="..\Tracking.Data\Tracking.Data.csproj" />
+    <ProjectReference Include="..\Tracking.Services\Tracking.Services.csproj" />
   </ItemGroup>
 
 </Project>

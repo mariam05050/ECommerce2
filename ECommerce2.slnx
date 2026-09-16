@@ -1,5 +1,11 @@
 <Solution>
-  <Folder Name="/docs/" />
+  <Folder Name="/docs/">
+    <File Path="api.md" />
+    <File Path="architecture.md" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="README.md" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="ECommerce.Database/ECommerce.Database.csproj" />
   </Folder>
@@ -28,5 +34,8 @@
     <Project Path="Tracking.Data/Tracking.Data.csproj" />
     <Project Path="Tracking.Services/Tracking.Services.csproj" />
   </Folder>
-  <Folder Name="/tests/" />
+  <Folder Name="/tests/">
+    <Project Path="ECommerce.IntegrationTests/ECommerce.IntegrationTests.csproj" Id="88be30e9-532b-4be5-ba2a-0fc2f75415b1" />
+    <Project Path="ECommerce.UnitTests/ECommerce.UnitTests.csproj" Id="dc1a6b78-9f88-4a0e-8ff3-453be8be9c43" />
+  </Folder>
 </Solution>
