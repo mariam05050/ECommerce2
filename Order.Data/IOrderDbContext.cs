@@ -1,4 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Cart.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using Product.Data;
 
 namespace Order.Data;
 
@@ -15,5 +18,8 @@ public interface IOrderDbContext
     DbSet<Product.Data.Product> Products { get; }
 
     Task<int> SaveChangesAsync(
+        CancellationToken cancellationToken = default);
+
+    Task<IDbContextTransaction> BeginTransactionAsync(
         CancellationToken cancellationToken = default);
 }

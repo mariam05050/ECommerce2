@@ -1,6 +1,7 @@
 ﻿using Auth.Data;
 using Cart.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Order.Data;
 using Product.Data;
 using Tracking.Data;
@@ -39,6 +40,13 @@ public class AppDbContext : DbContext,
 
     public DbSet<Tracking.Data.TrackingEvent> TrackingEvents
         => Set<Tracking.Data.TrackingEvent>();
+
+    public Task<IDbContextTransaction> BeginTransactionAsync(
+    CancellationToken cancellationToken = default)
+    {
+        return Database.BeginTransactionAsync(
+            cancellationToken);
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

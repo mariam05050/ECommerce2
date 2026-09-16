@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Order.Data\Order.Data.csproj" />
+    <ProjectReference Include="..\Tracking.Services\Tracking.Services.csproj" />
   </ItemGroup>
 
 </Project>

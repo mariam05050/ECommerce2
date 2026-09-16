@@ -1,3 +1,4 @@
+using Auth.API.Exceptions;
 using Auth.Data;
 using Auth.Services;
 using Cart.Data;
@@ -18,7 +19,6 @@ using Scalar.AspNetCore;
 using System.Text;
 using Tracking.Data;
 using Tracking.Services;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -102,14 +102,27 @@ builder.Services.AddScoped<ICartRepository, CartRepository>();
 
 // =====================================================
 // Order Services
-
+// =====================================================
 
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
-//Tracking service
+
+// =====================================================
+// Tracking Services
+// =====================================================
+
 builder.Services.AddScoped<ITrackingService, TrackingService>();
 builder.Services.AddScoped<ITrackingRepository, TrackingRepository>();
+
+
+// =====================================================
+// Global Exception Handling
+// =====================================================
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+builder.Services.AddProblemDetails();
 
 
 // =====================================================
@@ -157,10 +170,15 @@ builder.Services
 
 
 // =====================================================
-// Controllers
+// Controllers / JSON
 // =====================================================
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 
 
 // =====================================================
@@ -169,7 +187,7 @@ builder.Services.AddControllers();
 
 builder.Services.AddOpenApi(options =>
 {
-    // Register JWT Bearer security scheme.
+    // Register JWT Bearer as an OpenAPI security scheme.
     options.AddDocumentTransformer(
         (document, context, cancellationToken) =>
         {
@@ -231,6 +249,9 @@ var app = builder.Build();
 // Middleware
 // =====================================================
 
+// Global exception handler must run before endpoints.
+app.UseExceptionHandler();
+
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
@@ -241,7 +262,6 @@ app.UseAuthorization();
 // =====================================================
 // Endpoints
 // =====================================================
-
 app.MapOpenApi();
 
 app.MapScalarApiReference();

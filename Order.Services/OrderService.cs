@@ -1,109 +1,143 @@
-﻿using Order.Data;
+﻿using Microsoft.EntityFrameworkCore.Storage;
+using Order.Data;
+using Tracking.Data;
+using Tracking.Services;
 
 namespace Order.Services;
 
 public class OrderService : IOrderService
 {
     private readonly IOrderRepository _repository;
+    private readonly ITrackingService _trackingService;
 
-    public OrderService(IOrderRepository repository)
+    public OrderService(
+        IOrderRepository repository,
+        ITrackingService trackingService)
     {
         _repository = repository;
+        _trackingService = trackingService;
     }
 
     public async Task<OrderResponse> CheckoutAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        // Get the user's cart with its products and quantities.
-        var cart = await _repository.GetCartByUserIdAsync(
-            userId,
+        // Start one database transaction for the checkout.
+        var transaction = await _repository.BeginTransactionAsync(
             cancellationToken);
 
-        if (cart is null)
+        try
         {
-            throw new KeyNotFoundException(
-                "Cart was not found.");
-        }
+            // Get the user's cart with products and quantities.
+            var cart = await _repository.GetCartByUserIdAsync(
+                userId,
+                cancellationToken);
 
-        if (!cart.CartProducts.Any())
-        {
-            throw new InvalidOperationException(
-                "Cart is empty.");
-        }
-
-        decimal total = 0;
-
-        // Validate stock and calculate the order total.
-        foreach (var cartProduct in cart.CartProducts)
-        {
-            var product = cartProduct.Product;
-
-            if (product is null || product.IsDeleted)
+            if (cart is null)
             {
                 throw new KeyNotFoundException(
-                    "A product in the cart was not found.");
+                    "Cart was not found.");
             }
 
-            if (cartProduct.Quantity <= 0)
+            if (!cart.CartProducts.Any())
             {
                 throw new InvalidOperationException(
-                    "Cart contains an invalid quantity.");
+                    "Cart is empty.");
             }
 
-            if (cartProduct.Quantity > product.Stock)
+            decimal total = 0;
+
+            // Validate products, quantities, and stock.
+            foreach (var cartProduct in cart.CartProducts)
             {
-                throw new InvalidOperationException(
-                    $"Not enough stock for product '{product.Name}'.");
+                var product = cartProduct.Product;
+
+                if (product is null || product.IsDeleted)
+                {
+                    throw new KeyNotFoundException(
+                        "A product in the cart was not found.");
+                }
+
+                if (cartProduct.Quantity <= 0)
+                {
+                    throw new InvalidOperationException(
+                        "Cart contains an invalid quantity.");
+                }
+
+                if (cartProduct.Quantity > product.Stock)
+                {
+                    throw new InvalidOperationException(
+                        $"Not enough stock for product '{product.Name}'.");
+                }
+
+                total += product.Price * cartProduct.Quantity;
             }
 
-            total += product.Price * cartProduct.Quantity;
-        }
-
-        // Create the order.
-        var order = new Order.Data.Order
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            Total = total,
-            CreatedAtUtc = DateTime.UtcNow,
-            UpdatedAtUtc = null,
-            IsDeleted = false
-        };
-        _repository.AddOrder(order);
-
-
-        // Convert every cart item into an order item.
-        foreach (var cartProduct in cart.CartProducts)
-        {
-            var product = cartProduct.Product;
-
-            var orderProduct = new OrderProduct
+            // Create the order.
+            var order = new Order.Data.Order
             {
                 Id = Guid.NewGuid(),
-                OrderId = order.Id,
-                ProductId = product.Id,
-                Quantity = cartProduct.Quantity,
-
-                // Save the price at checkout time.
-                UnitPrice = product.Price
+                UserId = userId,
+                Total = total,
+                CreatedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = null,
+                IsDeleted = false
             };
 
-            // Reduce inventory only after checkout is being created.
-            product.Stock -= cartProduct.Quantity;
+            _repository.AddOrder(order);
 
-            _repository.AddOrderProduct(orderProduct);
+            // Convert cart items into order items.
+            foreach (var cartProduct in cart.CartProducts)
+            {
+                var product = cartProduct.Product;
 
-            // Remove purchased item from the cart.
-            _repository.RemoveCartProduct(cartProduct);
+                var orderProduct = new OrderProduct
+                {
+                    Id = Guid.NewGuid(),
+                    OrderId = order.Id,
+                    ProductId = product.Id,
+                    Quantity = cartProduct.Quantity,
+                    UnitPrice = product.Price
+                };
+
+                // Reduce stock.
+                product.Stock -= cartProduct.Quantity;
+
+                _repository.AddOrderProduct(orderProduct);
+
+                // Remove purchased item from cart.
+                _repository.RemoveCartProduct(cartProduct);
+            }
+
+            // Save order, order items, stock changes,
+            // and cart changes.
+            await _repository.SaveChangesAsync(
+                cancellationToken);
+
+            // Add the initial tracking status.
+            await _trackingService.UpdateStatusAsync(
+                order.Id,
+                TrackingStatus.Processing,
+                cancellationToken);
+
+            // Everything succeeded, so commit the transaction.
+            await _repository.CommitTransactionAsync(
+                transaction,
+                cancellationToken);
+
+            return await BuildOrderResponseAsync(
+                order,
+                cancellationToken);
         }
+        catch
+        {
+            // Something failed, so roll back everything.
+            await _repository.RollbackTransactionAsync(
+                transaction,
+                cancellationToken);
 
-        await _repository.SaveChangesAsync(
-            cancellationToken);
-
-        return await BuildOrderResponseAsync(
-            order,
-            cancellationToken);
+            throw;
+        }
     }
 
     public async Task<List<OrderResponse>> GetMyOrdersAsync(

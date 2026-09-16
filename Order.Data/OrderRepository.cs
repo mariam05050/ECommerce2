@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Order.Data;
 
@@ -75,7 +76,6 @@ public class OrderRepository : IOrderRepository
         _context.OrderProducts.Add(orderProduct);
     }
 
-
     public void RemoveCartProduct(
         Cart.Data.CartProduct cartProduct)
     {
@@ -86,5 +86,32 @@ public class OrderRepository : IOrderRepository
         CancellationToken cancellationToken = default)
     {
         return _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public Task<IDbContextTransaction> BeginTransactionAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return _context.BeginTransactionAsync(
+            cancellationToken);
+    }
+
+    public async Task CommitTransactionAsync(
+        IDbContextTransaction transaction,
+        CancellationToken cancellationToken = default)
+    {
+        await transaction.CommitAsync(
+            cancellationToken);
+
+        await transaction.DisposeAsync();
+    }
+
+    public async Task RollbackTransactionAsync(
+        IDbContextTransaction transaction,
+        CancellationToken cancellationToken = default)
+    {
+        await transaction.RollbackAsync(
+            cancellationToken);
+
+        await transaction.DisposeAsync();
     }
 }

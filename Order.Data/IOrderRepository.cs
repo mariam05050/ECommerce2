@@ -1,4 +1,7 @@
-﻿namespace Order.Data;
+﻿using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore.Storage;
+
+namespace Order.Data;
 
 public interface IOrderRepository
 {
@@ -20,6 +23,17 @@ public interface IOrderRepository
 
     Task<Product.Data.Product?> GetProductByIdAsync(
         Guid productId,
+        CancellationToken cancellationToken = default);
+
+    Task<IDbContextTransaction> BeginTransactionAsync(
+    CancellationToken cancellationToken = default);
+
+    Task CommitTransactionAsync(
+        IDbContextTransaction transaction,
+        CancellationToken cancellationToken = default);
+
+    Task RollbackTransactionAsync(
+        IDbContextTransaction transaction,
         CancellationToken cancellationToken = default);
 
     void AddOrder(Order order);
